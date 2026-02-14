@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  smartsurveillance:
+    build: .
+    container_name: smartsurveillance
+    volumes:
+      - ./alerts:/app/alerts
+      - ./logs:/app/logs
+      - ./config:/app/config
+      - /dev/video0:/dev/video0  # Mount webcam device
+    environment:
+      - PYTHONUNBUFFERED=1
+    # Uncomment for GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]

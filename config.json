@@ -1,0 +1,24 @@
+{
+    "camera": {
+        "source": 0,
+        "width": 1280,
+        "height": 720,
+        "fps": 30
+    },
+    "detection": {
+        "model_name": "yolov8n.pt",
+        "confidence_threshold": 0.5,
+        "target_classes": ["person"],
+        "save_alert_frames": true,
+        "alert_frame_dir": "alerts"
+    },
+    "alert": {
+        "enable_email": false,
+        "smtp_server": "smtp.gmail.com",
+        "smtp_port": 587,
+        "sender_email": "your-email@gmail.com",
+        "sender_password": "your-app-password",
+        "recipient_emails": ["recipient@example.com"],
+        "alert_cooldown_seconds": 30
+    }
+}
