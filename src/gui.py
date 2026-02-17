@@ -6,12 +6,13 @@ import sys
 import cv2
 import logging
 from pathlib import Path
+from datetime import datetime
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QPushButton, QSlider, QSpinBox,
                              QCheckBox, QLineEdit, QTextEdit, QComboBox, QTabWidget,
-                             QFileDialog, QMessageBox, QTableWidget, QTableWidgetItem)
+                             QFileDialog, QMessageBox, QTableWidget, QTableWidgetItem, QScrollArea)
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal
-from PyQt5.QtGui import QImage, QPixmap, QFont
+from PyQt5.QtGui import QImage, QPixmap, QFont, QColor
 import numpy as np
 
 from src.orchestrator import SurveillanceOrchestrator
@@ -66,9 +67,10 @@ class SmartSurveillanceApp(QMainWindow):
         self.orchestrator = SurveillanceOrchestrator()
         self.processing_thread = None
         self.latest_detections = []  # Store latest detections for frame display
+        self.log_display = None  # Will be initialized in init_ui
         self.init_ui()
         self.setWindowTitle("SmartSurveillance - Real-Time Detection")
-        self.setGeometry(100, 100, 1600, 900)
+        self.setGeometry(100, 100, 1600, 1000)
     
     def init_ui(self):
         """Initialize the user interface"""
@@ -76,12 +78,12 @@ class SmartSurveillanceApp(QMainWindow):
         self.setCentralWidget(main_widget)
         layout = QHBoxLayout(main_widget)
         
-        # Left side - Video and detections
+        # Left side - Video, detections, and logs
         left_layout = QVBoxLayout()
         
         # Video display
         self.video_label = QLabel("No video source")
-        self.video_label.setStyleSheet("background-color: black; min-width: 800px; min-height: 600px;")
+        self.video_label.setStyleSheet("background-color: black; min-width: 800px; min-height: 400px;")
         self.video_label.setAlignment(Qt.AlignCenter)
         left_layout.addWidget(QLabel("Live Video Feed"), 0)
         left_layout.addWidget(self.video_label, 1)
@@ -90,6 +92,46 @@ class SmartSurveillanceApp(QMainWindow):
         self.detection_label = QLabel("Detections: 0")
         self.detection_label.setFont(QFont("Arial", 12, QFont.Bold))
         left_layout.addWidget(self.detection_label)
+        
+        # Control buttons (Start/Stop)
+        button_layout = QHBoxLayout()
+        self.start_btn = QPushButton("Start")
+        self.start_btn.clicked.connect(self.start_surveillance)
+        self.start_btn.setStyleSheet("background-color: green; color: white; font-weight: bold; padding: 8px;")
+        self.start_btn.setMaximumHeight(40)
+        
+        self.stop_btn = QPushButton("Stop")
+        self.stop_btn.clicked.connect(self.stop_surveillance)
+        self.stop_btn.setEnabled(False)
+        self.stop_btn.setStyleSheet("background-color: red; color: white; font-weight: bold; padding: 8px;")
+        self.stop_btn.setMaximumHeight(40)
+        
+        button_layout.addWidget(self.start_btn)
+        button_layout.addWidget(self.stop_btn)
+        left_layout.addLayout(button_layout)
+        
+        # Activity Log Display
+        log_label = QLabel("Activity Log")
+        log_label.setFont(QFont("Arial", 10, QFont.Bold))
+        log_label.setStyleSheet("margin-top: 10px;")
+        left_layout.addWidget(log_label)
+        
+        self.log_display = QTextEdit()
+        self.log_display.setReadOnly(True)
+        self.log_display.setStyleSheet("""
+            QTextEdit {
+                background-color: white;
+                color: black;
+                border: 2px solid #cccccc;
+                border-radius: 4px;
+                padding: 8px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 8pt;
+            }
+        """)
+        self.log_display.setMaximumHeight(180)
+        self.log_display.setMinimumHeight(180)
+        left_layout.addWidget(self.log_display)
         
         # Right side - Controls
         right_layout = QVBoxLayout()
@@ -139,23 +181,9 @@ class SmartSurveillanceApp(QMainWindow):
         browse_btn.clicked.connect(self.browse_video_file)
         layout.addWidget(browse_btn)
         
-        # Start/Stop buttons
-        button_layout = QHBoxLayout()
-        self.start_btn = QPushButton("Start")
-        self.start_btn.clicked.connect(self.start_surveillance)
-        self.start_btn.setStyleSheet("background-color: green; color: white; font-weight: bold;")
-        
-        self.stop_btn = QPushButton("Stop")
-        self.stop_btn.clicked.connect(self.stop_surveillance)
-        self.stop_btn.setEnabled(False)
-        self.stop_btn.setStyleSheet("background-color: red; color: white; font-weight: bold;")
-        
-        button_layout.addWidget(self.start_btn)
-        button_layout.addWidget(self.stop_btn)
-        layout.addLayout(button_layout)
-        
         layout.addStretch()
         return widget
+    
     
     def create_detection_tab(self) -> QWidget:
         """Create detection settings tab"""
@@ -274,9 +302,42 @@ class SmartSurveillanceApp(QMainWindow):
         if file_path:
             self.video_file_input.setText(file_path)
     
+    def log_activity(self, level: str, message: str, category: str = "GENERAL"):
+        """
+        Log activities to both file and GUI display
+        
+        Args:
+            level: DEBUG, INFO, WARNING, ERROR
+            message: Log message
+            category: Activity category (FRAME_GRABBER, ORCHESTRATOR, DETECTOR, SYSTEM)
+        """
+        timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        log_entry = f"[{timestamp}] [{category:12}] {message}"
+        
+        # Log to file
+        if level == "DEBUG":
+            logger.debug(message)
+        elif level == "INFO":
+            logger.info(message)
+        elif level == "WARNING":
+            logger.warning(message)
+        elif level == "ERROR":
+            logger.error(message)
+        
+        # Display in GUI with colors
+        if self.log_display:
+            self.log_display.append(log_entry)
+            
+            # Auto-scroll to bottom
+            scrollbar = self.log_display.verticalScrollBar()
+            scrollbar.setValue(scrollbar.maximum())
+    
+    
     def start_surveillance(self):
         """Start the surveillance system"""
         try:
+            self.log_activity("INFO", "Surveillance system starting...", "SYSTEM")
+            
             # Determine camera source
             sel = self.camera_combo.currentText()
             if sel == "Video File":
@@ -296,12 +357,19 @@ class SmartSurveillanceApp(QMainWindow):
             
             # Initialize orchestrator
             model_name = self.model_combo.currentText()
+            self.log_activity("INFO", f"Initializing with camera source: {camera_source}, model: {model_name}", "SYSTEM")
+            
             if not self.orchestrator.initialize(camera_source, model_name):
+                self.log_activity("ERROR", "Failed to initialize system", "SYSTEM")
                 QMessageBox.critical(self, "Error", "Failed to initialize system")
                 return
             
+            self.log_activity("INFO", "System initialized successfully", "FRAME_GRABBER")
+            self.log_activity("INFO", "Starting frame capture thread", "FRAME_GRABBER")
+            
             # Start orchestrator
             self.orchestrator.start()
+            self.log_activity("INFO", "Orchestrator started", "ORCHESTRATOR")
             
             # Start processing thread
             self.processing_thread = ProcessingThread(self.orchestrator)
@@ -313,35 +381,56 @@ class SmartSurveillanceApp(QMainWindow):
             # Update UI
             self.start_btn.setEnabled(False)
             self.stop_btn.setEnabled(True)
-            logger.info("Surveillance started")
+            self.log_activity("INFO", "Surveillance system running", "SYSTEM")
             
         except Exception as e:
+            self.log_activity("ERROR", f"Failed to start: {str(e)}", "SYSTEM")
             QMessageBox.critical(self, "Error", f"Failed to start: {str(e)}")
-            logger.error(f"Start error: {e}")
+    
     
     def stop_surveillance(self):
         """Stop the surveillance system"""
         try:
+            self.log_activity("INFO", "Stopping surveillance system...", "SYSTEM")
+            
             self.orchestrator.stop()
             if self.processing_thread:
                 self.processing_thread.stop()
             
+            self.log_activity("INFO", "FrameGrabber: Releasing camera resources", "FRAME_GRABBER")
+            self.log_activity("INFO", "Orchestrator: Processing stopped", "ORCHESTRATOR")
+            
             self.start_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             self.video_label.setText("Surveillance stopped")
-            logger.info("Surveillance stopped")
+            self.log_activity("INFO", "Surveillance system stopped", "SYSTEM")
             
         except Exception as e:
+            self.log_activity("ERROR", f"Failed to stop: {str(e)}", "SYSTEM")
             QMessageBox.critical(self, "Error", f"Failed to stop: {str(e)}")
+    
     
     def update_video_frame(self, frame):
         """Update video display"""
         try:
+            # Log frame grabber activity
+            frame_info = self.orchestrator.frame_grabber.get_frame_info()
+            buffer_size = self.orchestrator.frame_grabber.get_buffer_size()
+            self.log_activity("DEBUG", f"Frame #{frame_info['frame_count']} | Size: {frame.shape[1]}x{frame.shape[0]} | Buffer: {buffer_size}/{self.orchestrator.frame_grabber.buffer_size}", "FRAME_GRABBER")
+            
             # Draw detections on the frame
             frame_with_detections = self.orchestrator.object_detector.draw_detections(
                 frame,
                 self.latest_detections
             )
+            
+            # Log detections
+            if self.latest_detections:
+                self.log_activity("INFO", f"Objects detected: {len(self.latest_detections)} object(s)", "ORCHESTRATOR")
+                for det in self.latest_detections:
+                    class_name = det.get('class', 'Unknown') if isinstance(det, dict) else str(det)
+                    conf = det.get('confidence', 0) if isinstance(det, dict) else 0
+                    self.log_activity("DEBUG", f"  -> Detection: {class_name} (confidence: {conf:.2f})", "ORCHESTRATOR")
             
             # Convert to RGB
             rgb_frame = cv2.cvtColor(frame_with_detections, cv2.COLOR_BGR2RGB)
@@ -357,7 +446,8 @@ class SmartSurveillanceApp(QMainWindow):
             self.video_label.setPixmap(scaled_pixmap)
             
         except Exception as e:
-            logger.error(f"Frame update error: {e}")
+            self.log_activity("ERROR", f"Frame update error: {str(e)}", "SYSTEM")
+    
     
     def update_detections(self, detections):
         """Update detection display"""
