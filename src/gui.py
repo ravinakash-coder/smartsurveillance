@@ -78,7 +78,7 @@ class SmartSurveillanceApp(QMainWindow):
         self.setCentralWidget(main_widget)
         layout = QHBoxLayout(main_widget)
         
-        # Left side - Video, detections, and logs
+        # Left side - Video and detections
         left_layout = QVBoxLayout()
         
         # Video display
@@ -110,30 +110,7 @@ class SmartSurveillanceApp(QMainWindow):
         button_layout.addWidget(self.stop_btn)
         left_layout.addLayout(button_layout)
         
-        # Activity Log Display
-        log_label = QLabel("Activity Log")
-        log_label.setFont(QFont("Arial", 10, QFont.Bold))
-        log_label.setStyleSheet("margin-top: 10px;")
-        left_layout.addWidget(log_label)
-        
-        self.log_display = QTextEdit()
-        self.log_display.setReadOnly(True)
-        self.log_display.setStyleSheet("""
-            QTextEdit {
-                background-color: white;
-                color: black;
-                border: 2px solid #cccccc;
-                border-radius: 4px;
-                padding: 8px;
-                font-family: 'Courier New', Courier, monospace;
-                font-size: 8pt;
-            }
-        """)
-        self.log_display.setMaximumHeight(180)
-        self.log_display.setMinimumHeight(180)
-        left_layout.addWidget(self.log_display)
-        
-        # Right side - Controls
+        # Right side - Controls and Activity Log
         right_layout = QVBoxLayout()
         
         # Create tabs for different sections
@@ -156,6 +133,29 @@ class SmartSurveillanceApp(QMainWindow):
         tabs.addTab(stats_widget, "Statistics")
         
         right_layout.addWidget(tabs, 1)
+        
+        # Activity Log Display (on right side)
+        log_label = QLabel("Activity Log")
+        log_label.setFont(QFont("Arial", 10, QFont.Bold))
+        log_label.setStyleSheet("margin-top: 10px;")
+        right_layout.addWidget(log_label)
+        
+        self.log_display = QTextEdit()
+        self.log_display.setReadOnly(True)
+        self.log_display.setStyleSheet("""
+            QTextEdit {
+                background-color: white;
+                color: black;
+                border: 2px solid #cccccc;
+                border-radius: 4px;
+                padding: 8px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 8pt;
+            }
+        """)
+        self.log_display.setMaximumHeight(150)
+        self.log_display.setMinimumHeight(150)
+        right_layout.addWidget(self.log_display)
         
         # Main layout
         layout.addLayout(left_layout, 2)
