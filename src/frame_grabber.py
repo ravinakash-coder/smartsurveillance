@@ -26,6 +26,7 @@ class FrameGrabber:
             fps: Frames per second
             buffer_size: Maximum frames to buffer (default: 30)
         """
+        logger.debug(f"Initializing FrameGrabber - source={source}, fps={fps}, buffer_size={buffer_size}")
         self.source = source
         self.fps = fps
         self.buffer_size = buffer_size
@@ -40,6 +41,9 @@ class FrameGrabber:
         self.is_running = False
         self.fps_counter = 0
         self.last_fps_time = time.time()
+        self.frame_errors = 0
+        self.total_frames_processed = 0
+        logger.debug("FrameGrabber initialization complete")
         
     def open(self) -> bool:
         """Open the video capture device and start capture thread"""
