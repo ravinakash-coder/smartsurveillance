@@ -1,7 +1,7 @@
-Smart Surveillance: Real-Time Automated Surveillance and Proactive Alert System using Deep Learning-Based Object Detection
+
+
+This system transforms conventional surveillance from a passive “record-and-monitor” approach into an active “detect-and-alert” framework. It reduces false alarms, minimizes manual monitoring, and ensures quicker response to security threats. The proposed solution is efficient, scalable, and suitable for real-time security applications such as restricted areas, campuses, and public spaces.Smart Surveillance: Real-Time Automated Surveillance and Proactive Alert System using Deep Learning-Based Object Detection
 
 Traditional surveillance systems such as CCTV cameras and motion sensors are mostly reactive and depend heavily on continuous human monitoring. These systems often suffer from limitations like false alarms caused by environmental factors and delayed response due to human fatigue. To overcome these issues, this project proposes a smart, real-time automated surveillance system using deep learning–based object detection.
 
 The proposed system uses the YOLOv8 (You Only Look Once) deep learning model to detect objects, especially humans, from live video streams captured through a camera. OpenCV is used for video frame acquisition and image preprocessing. YOLOv8 processes each frame using a single convolutional neural network, enabling fast and accurate object detection with low latency. When a predefined object such as a person is detected with high confidence, the system automatically generates an alert using an email notification mechanism.
-
-This system transforms conventional surveillance from a passive “record-and-monitor” approach into an active “detect-and-alert” framework. It reduces false alarms, minimizes manual monitoring, and ensures quicker response to security threats. The proposed solution is efficient, scalable, and suitable for real-time security applications such as restricted areas, campuses, and public spaces.

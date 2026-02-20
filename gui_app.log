@@ -1,0 +1,5 @@
+2026-02-20 20:00:44,625 - __main__ - INFO - SmartSurveillance GUI started
+2026-02-20 20:00:51,324 - __main__ - INFO - Starting detection from source: 0
+2026-02-20 20:00:57,345 - src.object_detector - INFO - Loading YOLOv8 model: yolov8n.pt
+2026-02-20 20:00:57,442 - src.object_detector - INFO - YOLOv8 model loaded successfully
+2026-02-20 20:01:13,312 - __main__ - INFO - Detection stopped
